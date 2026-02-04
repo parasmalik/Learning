@@ -119,6 +119,8 @@ From the collected data:
 
 The results suggest that **primary key choice is phase-dependent**, not universally optimal.
 
+![Observation](plots/auto-increment-vs-random-pk-mysql.png)
+
 ---
 
 ## Repository Structure
