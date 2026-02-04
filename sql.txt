@@ -1,0 +1,104 @@
+drop table uuid_pk7;
+drop table seq_pk7;
+CREATE TABLE uuid_pk7 (   id BIGINT PRIMARY KEY,   payload CHAR(2) ) ENGINE=InnoDB;
+CREATE TABLE seq_pk7 (   id BIGINT AUTO_INCREMENT PRIMARY KEY,   payload CHAR(2),   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ) ENGINE=InnoDB;
+
+
+ANALYZE TABLE uuid_pk7;
+ANALYZE TABLE seq_pk7;
+SELECT   table_name, data_length / 1024 / 1024 AS data_mb, index_length / 1024 / 1024 AS index_mb FROM information_schema.tables WHERE table_schema = 'test' and table_name like '%_pk7';
+
+select count(1) from uuid_pk7;
+select count(1) from seq_pk7;
+
+
+DELIMITER $$
+
+CREATE PROCEDURE delete_by_ids_json (
+    IN p_table_name VARCHAR(64),
+    IN p_ids_json JSON
+)
+BEGIN
+
+    CREATE TEMPORARY TABLE IF NOT EXISTS tmp_delete_ids (
+        id BIGINT PRIMARY KEY
+    ) ENGINE=InnoDB;
+
+    TRUNCATE TABLE tmp_delete_ids;
+
+    /* explode JSON array into rows */
+    INSERT IGNORE INTO tmp_delete_ids (id)
+    SELECT jt.id
+    FROM JSON_TABLE(
+        p_ids_json,
+        '$[*]' COLUMNS (
+            id BIGINT PATH '$'
+        )
+    ) AS jt;
+
+    /* dynamic delete */
+    SET @sql = CONCAT(
+        'DELETE t FROM ',
+        p_table_name,
+        ' t JOIN tmp_delete_ids d ON t.id = d.id'
+    );
+
+    PREPARE stmt FROM @sql;
+    EXECUTE stmt;
+    DEALLOCATE PREPARE stmt;
+
+END$$
+
+DELIMITER ;
+
+
+
+
+
+DELIMITER $$
+
+CREATE PROCEDURE insert_rows_json2 (
+    IN p_table_name VARCHAR(64),
+    IN p_rows JSON
+)
+BEGIN
+
+    /* staging table */
+    CREATE TEMPORARY TABLE IF NOT EXISTS tmp_insert_rows (
+        id BIGINT,
+        p CHAR(100),
+        PRIMARY KEY (id)
+    ) ENGINE=InnoDB;
+
+    TRUNCATE TABLE tmp_insert_rows;
+
+    /* explode JSON rows */
+    INSERT INTO tmp_insert_rows (id, p)
+    SELECT
+        jt.id,
+        jt.p
+    FROM JSON_TABLE(
+        p_rows,
+        '$[*]' COLUMNS (
+            id BIGINT PATH '$.id',
+            p INT PATH '$.p'
+        )
+    ) AS jt;
+
+    /* ordered bulk insert */
+    SET @sql = CONCAT(
+        'INSERT INTO ', p_table_name,
+        ' (id, payload)
+         SELECT id, p
+         FROM tmp_insert_rows
+         ORDER BY id'
+    );
+
+    PREPARE stmt FROM @sql;
+    EXECUTE stmt;
+    DEALLOCATE PREPARE stmt;
+
+END$$
+
+DELIMITER ;
+
