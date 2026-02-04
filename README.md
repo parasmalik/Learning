@@ -125,7 +125,7 @@ The results suggest that **primary key choice is phase-dependent**, not universa
 .
 ├── script_test2.py # Main experiment driver
 ├── activity_file2.csv # Generated metrics (output)
-├── mysql.txt # mysql queries to create tables/procs (output)
+├── sql.txt # mysql queries to create tables/procs (output)
 ├── plots/ # Graphs and visualizations
 ├── README.md # This file
 
