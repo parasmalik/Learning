@@ -122,4 +122,24 @@ The results suggest that **primary key choice is phase-dependent**, not universa
 ---
 
 ## Repository Structure
+.
+├── script_test2.py # Main experiment driver
+├── activity_file2.csv # Generated metrics (output)
+├── mysql.txt # mysql queries to create tables/procs (output)
+├── plots/ # Graphs and visualizations
+├── README.md # This file
+
+
+---
+
+## Prerequisites
+
+- MySQL 8.0+
+- InnoDB storage engine
+- Python 3.8+
+- Python dependencies:
+  ```bash
+  pip install mysql-connector-python pandas matplotlib
+
+
 
